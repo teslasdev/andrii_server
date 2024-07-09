@@ -54,10 +54,31 @@ def register_user():
     users_collection.insert_one(user)
     return jsonify({"message": "User registered successfully"}), 201
 
+@app.route('/api/login', methods=['POST'])
+def login_user():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+
+    if not all([email, password]):
+        return jsonify({"error": "Missing data"}), 400
+
+    # Check if user exists in the database
+    user = users_collection.find_one({"email": email})
+
+    if user:
+        # Validate password
+        hashed_password = hash_password(password)
+        if user['password'] == hashed_password:
+            return jsonify({"message": "Login successful"}), 200
+        else:
+            return jsonify({"error": "Invalid credentials"}), 401
+    else:
+        return jsonify({"error": "User not found"}), 404
 # Add a simple GET endpoint
 @app.route('/api/', methods=['GET'])
 def hello_world():
     return jsonify({"message": "Hello World"}), 200
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=8080)
